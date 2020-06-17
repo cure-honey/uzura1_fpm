@@ -1,0 +1,8 @@
+name = "uzura1_fpm"
+license = "MIT"
+author = "https://qiita.com/cure_honey/items/25da03704c5c2588a6b4"
+
+[[test]]
+name="runTests"
+source-dir="test"
+main="test_sweep.f90"
