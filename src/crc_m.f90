@@ -12,7 +12,7 @@
             do i = n - 1, 0, -1
                 ibit1 = ibits(inp,   i, 1)
                 ibit2 = ibits(icrc, 15, 1)
-                icrc  = iand(int(Z'0000FFFF'), ishft(icrc, 1)) ! trim to 16bit  
+                icrc  = ibits(ishft(icrc, 1), 0, 16) ! shift up 1bit, trim to 16bit
                 if ( ieor(ibit1, ibit2) == 1 ) icrc = ieor(icrc, igenerator)
             end do
         end subroutine crc16  
