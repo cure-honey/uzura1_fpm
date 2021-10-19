@@ -158,7 +158,7 @@
             integer :: i
             associate (ipos => this%ipos, bit_string => this%bit_string)
                 do i = 1, len_trim(str)
-                    if (str(i:i) /= '0' .and. str(i:i) /= '1') stop 'invalid string: subroutine put_bit_c'
+                    if (scan(str(i:i), '01') == 0) stop 'invalid string: subroutine put_bit_c'
                     this%bit_string(ipos:ipos) = str(i:i)
                     ipos = ipos + 1
                 end do

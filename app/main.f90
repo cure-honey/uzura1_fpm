@@ -42,7 +42,7 @@
             smr = 0
             call psychoacoustics(pcm, wav%get_sampling_rate(), smr)
             iscale_factor = isubband_normalization(subb%subband)
-            itot_bits = itot_bits + 4 * 32 * nchannel               ! 4*32*nch bits required for the scale factor bits : 
+            itot_bits = itot_bits + 4 * 32 * nchannel     ! 4*32*nch bits required for the scale factor bits : 
             if (mpg%icrc == 0) itot_bits = itot_bits + 16 ! 16bits required for the crc
             call bit_allocation(smr, max_bits, itot_bits, ialloc_bits)
             if (mpg%icrc == 0) call mp1%encode_crc(mpg, ialloc_bits)
@@ -136,16 +136,16 @@
             character (len =  6) :: fmt
             integer :: narg, iarg, length
             iarg = 0
-            narg = command_argument_count() + 1
+            narg = command_argument_count()
             do
                 iarg = iarg + 1
-                if (iarg >= narg) call print_option()
+                if (iarg > narg) call print_option()
                 call get_command_argument(iarg, buffer)
                 if (buffer(1:1) /= '-') exit  
                 select case(trim(buffer))
                 case ('-b') 
                     iarg = iarg + 1
-                    if ( iarg >= narg ) call print_option()
+                    if ( iarg > narg ) call print_option()
                     call get_command_argument(iarg, buffer, length)
                     write(fmt, '(a, i1, a)') '(i', length, ')' 
                     read(buffer, fmt) mpg%ibit_rate
