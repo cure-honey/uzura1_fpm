@@ -10,7 +10,7 @@
         integer , allocatable :: iscale_factor(:, :), isubband(:, :, :), ialloc_bits(:, :)
         real(kd), allocatable :: pcm(:, :), smr(:, :)
         integer :: max_bits, itot_bits
-        integer :: nchannel, iframe = 1, ntotal_frames
+        integer :: nchannel, iframe = 0, ntotal_frames
         character(len = :), allocatable :: file_name, fn_in, fn_out
         type(mpg_t) :: mpg
         type(subband_t), allocatable :: subb
@@ -32,14 +32,13 @@
         call subb%init(nchannel)
         ntotal_frames = wav%get_data_size() / (mpeg_frame_size(mpg%layer) * nchannel * 2)
         pcm = 0.0d0
-        do while(iframe <= ntotal_frames )
+        do while(iframe < ntotal_frames )
             call get_maxbits(mpg, max_bits)
             call mp1%clear_bit_buff(max_bits)
             call mp1%encode_header(mpg)
             itot_bits = 32
             call wav%pcm1frame(pcm) 
-            call subb%polyphase_filter12(pcm(:, :)) 
-            smr = 0
+            call subb%polyphase_filter12(pcm) 
             call psychoacoustics(pcm, wav%get_sampling_rate(), smr)
             iscale_factor = isubband_normalization(subb%subband)
             itot_bits = itot_bits + 4 * 32 * nchannel     ! 4*32*nch bits required for the scale factor bits : 
@@ -52,7 +51,7 @@
             iframe = iframe + 1
             if (mod(iframe, 200) == 0) call update_status(iframe, ntotal_frames) 
         end do
-        write(*, *) 'total frames', iframe - 1, '/', ntotal_frames
+        write(*, *) 'total frames', iframe, '/', ntotal_frames
         deallocate(subb)
         deallocate(wav) ! close file & deallocte
         deallocate(mp1) ! close file & deallocte
