@@ -1,13 +1,12 @@
 # uzura1_fpm
-uzura1 with fpm (Fortran package manager)
+uzura1 with fpm (Fortran package manager) ver 0.4
 
 Fortran Package Manager is required.
 https://github.com/fortran-lang/fpm
 
 $cd uzura1_fpm
 
-$fpm build --release
-(repeat several times)
+$fpm build --profile release
 
 $fpm run
 
