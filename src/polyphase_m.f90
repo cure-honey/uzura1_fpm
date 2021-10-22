@@ -2,7 +2,7 @@
          use kind_m
          implicit none
          private
-         public :: subband_t
+         public :: subband_t, init_subband
          real(kd), parameter :: pi = 4 * atan(1.0_kd), pi64 = pi / 64
          integer :: i, j
          ! ISO section C.1.3 Analysis subband filter    (rounding at 9th decimal) 
@@ -78,16 +78,16 @@
         type :: subband_t
             real(kd), public, allocatable :: subband(:, :, :) 
         contains
-            procedure, public :: init
             procedure, public :: polyphase_filter12
             final             :: fin_subband
         end type subband_t  
     contains
-        subroutine init(this, nchannel)
-            class(subband_t), intent(in out) :: this
+        subroutine init_subband(this, nchannel)
+            type(subband_t), intent(out), allocatable :: this
             integer         , intent(in ) :: nchannel
+            allocate( this )
             allocate( this%subband(0:31, 0:11, 0:nchannel - 1) )
-        end subroutine init
+        end subroutine init_subband
 
         subroutine fin_subband(this)
             type(subband_t), intent(in out) :: this

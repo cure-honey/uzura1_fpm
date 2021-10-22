@@ -27,6 +27,6 @@
         character (len = *), parameter :: mpeg_mode_names(0:*)    = [character(len = 8)::'stereo', 'j-stereo', 'dual-ch', 'mono']
         character (len = *), parameter :: mpeg_layer_names(0:*)   = [character(len = 3)::'', 'III', 'II', 'I']
         character (len = *), parameter :: mpeg_version_names(0:*) = [character(len = 7)::'MPEG2.5', '', 'MPEG-II', 'MPEG-I']
-        character (len = *), parameter :: mpeg_psy_names(0:*)     = [character(len = 6)::'', '', '', '']
+        character (len = *), parameter :: mpeg_psy_names(0:*)     = [character(len = 6)::'enoken', '', '', '']
         character (len = *), parameter :: mpeg_demp_names(0:*)    = [character(len = 7)::'none', '50/15us', '', 'CITT']
     end module mpg_m    

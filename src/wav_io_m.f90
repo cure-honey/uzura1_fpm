@@ -3,7 +3,7 @@
         use file_io_m
         implicit none
         private
-        public :: wavfile_t, fmt_t
+        public :: wavfile_t, open_wav_file
         type :: fmt_t
             sequence
             character(4):: chunk_id
@@ -38,8 +38,8 @@
             type (riffwav_t) :: riff
             integer(int16), allocatable :: pcm16(:) ! <- data of data_chunk
         contains
-            procedure, public :: open_file  => open_wav_file
-            procedure, public :: close_file => close_wav_file
+            procedure, public :: open_file  => open_wav
+            procedure, public :: close_file => close_wav
             final             :: destroy_file
             procedure, public :: pcm1frame
             procedure, public :: get_channel
@@ -49,6 +49,13 @@
         end type wavfile_t
     contains
         subroutine open_wav_file(this, fn)
+            type(wavfile_t), intent(out), allocatable :: this 
+            character(len = *), intent(in) :: fn
+            allocate(this)
+            call this%open_file(fn)
+        end subroutine open_wav_file
+ 
+        subroutine open_wav(this, fn)
             class(wavfile_t), intent(in out) :: this
             character(len = *), intent(in) :: fn
             integer :: io
@@ -91,12 +98,12 @@
                 ! read whole pcm data
                 read(this%iunit) this%pcm16 
             end associate
-        end subroutine open_wav_file 
+        end subroutine open_wav 
 
-        subroutine close_wav_file(this)           
+        subroutine close_wav(this)           
             class(wavfile_t), intent(in) :: this
             close(this%iunit)
-        end subroutine close_wav_file
+        end subroutine close_wav
   
         subroutine destroy_file(this) ! finalization routine
             type(wavfile_t), intent(in) :: this

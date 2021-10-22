@@ -5,7 +5,7 @@
         use crc_m
         implicit none
         private 
-        public :: mpgfile_t
+        public :: mpgfile_t, open_mp1_file
         type, extends(file_t) :: mpgfile_t
             private
             integer :: iunit 
@@ -13,8 +13,8 @@
             character(:), allocatable :: fn
             character (len = 20000) :: bit_string
         contains
-            procedure :: open_file  => open_mpg_file
-            procedure :: close_file => close_mpg_file
+            procedure :: open_file  => open_mpg
+            procedure :: close_file => close_mpg
             final     :: destroy_file
             procedure :: write_bits_1frame
             procedure :: clear_bit_buff
@@ -25,7 +25,14 @@
             procedure :: put_bits_c
         end type mpgfile_t    
     contains
-        subroutine open_mpg_file(this, fn)
+        subroutine open_mp1_file(this, fn)
+            type(mpgfile_t),   intent(out), allocatable :: this
+            character(len = *), intent(in) :: fn
+            allocate(this)
+            call this%open_file(fn)        
+        end subroutine open_mp1_file
+  
+        subroutine open_mpg(this, fn)
             class(mpgfile_t),   intent(in out) :: this
             character(len = *), intent(in) :: fn
             integer :: io
@@ -34,12 +41,12 @@
               write(*, *) 'i/o error ', io, ' occuerred. file =', this%iunit, 'file name ', fn
               stop 'check output file!'
             end if
-        end subroutine open_mpg_file
+        end subroutine open_mpg
       
-        subroutine close_mpg_file(this)
+        subroutine close_mpg(this)
             class(mpgfile_t), intent(in) :: this
             close(this%iunit)
-        end subroutine close_mpg_file
+        end subroutine close_mpg
       
         subroutine destroy_file(this)
             type(mpgfile_t), intent(in) :: this
