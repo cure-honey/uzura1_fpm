@@ -22,30 +22,26 @@
 !!
         fn_in  = trim(file_name) // '.wav'
         fn_out = trim(file_name) // '.mp1'
-        allocate(wav, mp1)
-        call wav%open_file(fn_in ) ! read whole wav file
-        call mp1%open_file(fn_out)
+        call open_wav_file(wav, fn_in ) ! allocate wav, read whole wav file
+        call open_mp1_file(mp1, fn_out) ! allocate mp1
         call pr_info(mpg)
         call pr_play_time( wav%get_play_time() )
         nchannel = wav%get_channel()
         if (nchannel == 1) mpg%mode = 3 ! monoral  
-        allocate( pcm(864, nchannel), smr(32, nchannel) )
-        allocate( iscale_factor(32, nchannel), isubband(32, 12, nchannel), ialloc_bits(32, nchannel) )
-        allocate(subb)
-        call subb%init(nchannel)
+        allocate( pcm(864, nchannel), source = 0.0_kd )
+        allocate( smr(32, nchannel), iscale_factor(32, nchannel), isubband(32, 12, nchannel), ialloc_bits(32, nchannel) )
+        call init_subband(subb, nchannel)
         ntotal_frames = wav%get_data_size() / (mpeg_frame_size(mpg%layer) * nchannel * 2)
-        pcm = 0.0d0
-        do while(iframe <= ntotal_frames )
+        do while(iframe < ntotal_frames )
             call get_maxbits(mpg, max_bits)
             call mp1%clear_bit_buff(max_bits)
             call mp1%encode_header(mpg)
             itot_bits = 32
             call wav%pcm1frame(pcm) 
-            call subb%polyphase_filter12(pcm(:, :)) 
-            smr = 0
+            call subb%polyphase_filter12(pcm) 
             call psychoacoustics(pcm, wav%get_sampling_rate(), smr)
             iscale_factor = isubband_normalization(subb%subband)
-            itot_bits = itot_bits + 4 * 32 * nchannel               ! 4*32*nch bits required for the scale factor bits : 
+            itot_bits = itot_bits + 4 * 32 * nchannel     ! 4*32*nch bits required for the scale factor bits : 
             if (mpg%icrc == 0) itot_bits = itot_bits + 16 ! 16bits required for the crc
             call bit_allocation(smr, max_bits, itot_bits, ialloc_bits)
             if (mpg%icrc == 0) call mp1%encode_crc(mpg, ialloc_bits)
