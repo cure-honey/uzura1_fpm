@@ -7,7 +7,7 @@
         real(kd), save :: crbw_fft(0:256), cbwl_fft(0:256)
         real(kd), save :: sp(256, 256) ! spreading function for masking
         real(kd), save :: scale
-        real(kd), parameter :: alpha = 0.27d0 ! non-linear factor
+        real(kd), parameter :: alpha = 0.27_kd ! non-linear factor
     contains
         subroutine psychoacoustics(pcm, isample_rate, smr)
             use fft_m
@@ -55,7 +55,7 @@
 
         pure elemental real(kd) function spreading(z)
             real(kd), intent(in) :: z ! pseud-bark
-            if ( z > 0.0d0 ) then
+            if ( z > 0.0_kd ) then
                 spreading = -25.0_kd * z 
             else
                 spreading =  75.0_kd * z 
@@ -67,14 +67,12 @@
             real(kd), intent(in) :: f ! hz
             real(kd), parameter :: gamma = 0.69_kd
             critical_band_width = 25.0_kd + 75.0_kd * ( 1.0_kd + 1.4_kd * (f / 1000.0_kd)**2 )**gamma 
-            !  critical_band_width = 100.0d0 * ( 1.0d0 + 1.0d0 * (f / 1000.0d0)**2 )**gamma 
+            !  critical_band_width = 100.0_kd * ( 1.0_kd + 1.0_kd * (f / 1000.0_kd)**2 )**gamma 
         end function critical_band_width
 
         pure elemental real(kd) function decibel(x) 
             real (kd), intent(in) :: x 
-            real (kd) :: tmp
-            tmp = max(1.0e-100_kd, x)
-            decibel = 10.0e0_kd * log10(tmp)
+            decibel = 10.0e0_kd * log10( max(x, 1.0e-100_kd) )
         end function decibel
       
         subroutine calc_smr(cfft, smr)
@@ -85,11 +83,10 @@
             integer :: iband, i, m, i0, i1
             xa = 2 * decibel( abs(cfft(0:256)) )
             ya = 0.0_kd
-            do i = 1, 256 ! convolution of spreading function 
-                do m = 1, 256                                                                                    ! i maskee, m masker
-                    ya(i) = ya(i) + 10.0_kd**( ((sp(i, m) + xa(m) - ath_fft(m)) * alpha - cbwl_fft(m)) / 10.0_kd ) ! non-linear sum
-                end do   
-            end do   
+            forall(i = 1:256, m = 1:256) &  ! i maskee, m masker 
+               ya(i) = ya(i) + 10.0_kd**( ((sp(i, m) + xa(m) - ath_fft(m)) * alpha - cbwl_fft(m)) / 10.0_kd ) ! non-linear sum
+            ya = max(decibel(ya * scale) / alpha - 11.5_kd, ath_fft - 90.3_kd) ! 11.5 mask factor, 90.3dB = 2^15  ATH shift empirical 
+
             ya = max(decibel(ya * scale) / alpha - 11.5_kd, ath_fft - 90.3_kd) ! 11.5 mask factor, 90.3dB = 2^15  ATH shift empirical 
         ! effective spl
             do i = 1, 256

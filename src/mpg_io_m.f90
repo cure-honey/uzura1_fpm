@@ -36,7 +36,7 @@
             class(mpgfile_t),   intent(in out) :: this
             character(len = *), intent(in) :: fn
             integer :: io
-            open(newunit = this%iunit, file = fn, iostat = io, status = 'unknown', access = 'stream')
+            open(newunit = this%iunit, file = fn, iostat = io, status = 'replace', access = 'stream')
             if (io /= 0) then
               write(*, *) 'i/o error ', io, ' occuerred. file =', this%iunit, 'file name ', fn
               stop 'check output file!'

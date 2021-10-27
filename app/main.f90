@@ -49,6 +49,7 @@
             if (mod(iframe, 200) == 0) call update_status(iframe, ntotal_frames) 
         end do
         write(*, *) 'total frames', iframe, '/', ntotal_frames
+        deallocate(wav, mp1)
     contains
         subroutine pr_info(mpg)
             type (mpg_t), intent(in) :: mpg
