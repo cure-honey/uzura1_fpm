@@ -18,13 +18,9 @@ $fpm run
          -c        copyright flag on
          -o        original  flag on
 ```
-$fpm test
-
- test/sweep.wav --> test/sweep.mp1
-
-
 ## encode fn.wav file to fn.mp1 file
-$build/gfortran_release/app/uzura1_fpm  fn
+
+$fpm run -- -b 10 file_name
 
 
 # bug fix etc
