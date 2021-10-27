@@ -91,19 +91,19 @@
 
         subroutine get_maxbits(mpg, max_bits)
             type(mpg_t), intent(in out) :: mpg
-            integer , intent(out) :: max_bits
-            integer        , save :: islot_size
-            real (kind = 8), save :: padding, fslot_size
-            logical        , save :: qfirst = .true.
+            integer, intent(out) :: max_bits
+            integer  , save :: islot_size
+            real (kd), save :: padding, fslot_size
+            logical  , save :: qfirst = .true.
             if (qfirst) then
                 qfirst = .false.
-                padding = 0.0d0
+                padding = 0.0_kd
                 call calc_slot_size(mpg, islot_size, fslot_size)
             end if
             padding = padding + fslot_size
             if (padding > 1) then
                 mpg%ipadding = 1
-                padding = padding - 1.0d0
+                padding = padding - 1.0_kd
             else
                 mpg%ipadding = 0
             end if
@@ -157,7 +157,7 @@
         end subroutine get_option   
  
         subroutine print_option()
-            write(*, *) 'Usage : uzura -option file_name '
+            write(*, *) 'Usage : uzura1 -option file_name '
             write(*, *) '      : file_name.wav -> file_name.mp1'
             write(*, *) 'Option: -b 1..14  bitrate (default 12: 384kbps)'
             write(*, *) '        -crc      CRC16 error protection on'

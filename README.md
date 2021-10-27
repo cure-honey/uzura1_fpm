@@ -1,5 +1,5 @@
 # uzura1_fpm
-uzura1 with fpm (Fortran package manager) ver 0.4
+uzura1 for fpm (Fortran package manager) ver 0.4
 
 Fortran Package Manager is required.
 https://github.com/fortran-lang/fpm
@@ -11,7 +11,7 @@ $fpm build --profile release
 $fpm run
 
 ```
- Usage : uzura -option file_name
+ Usage : uzura1 -option file_name
        : file_name.wav -> file_name.mp1
  Option: -b 1..14  bitrate (default 12: 384kbps)
          -crc      CRC16 error protection on
