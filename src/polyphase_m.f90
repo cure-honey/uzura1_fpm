@@ -83,9 +83,8 @@
         end type subband_t  
     contains
         subroutine init_subband(this, nchannel)
-            type(subband_t), intent(out), allocatable :: this
-            integer         , intent(in ) :: nchannel
-            allocate( this )
+            type(subband_t), intent(in out) :: this
+            integer        , intent(in ) :: nchannel
             allocate( this%subband(0:31, 0:11, 0:nchannel - 1) )
         end subroutine init_subband
 
@@ -106,7 +105,7 @@
                 end do
             end do
         contains 
-            subroutine polyphase_filter(z, s)
+            pure subroutine polyphase_filter(z, s)
                 real(kd), intent(in ) :: z(0:)
                 real(kd), intent(in out) :: s(:)
                 real(kd) ::  y(0:63)

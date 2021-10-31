@@ -9,39 +9,36 @@
         implicit none
         integer , allocatable :: iscale_factor(:, :), isubband(:, :, :), ialloc_bits(:, :)
         real(kd), allocatable :: pcm(:, :), smr(:, :)
-        integer :: max_bits, itot_bits
-        integer :: nchannel, iframe = 0, ntotal_frames
+        integer :: nchannel, max_bits, iframe = 0, ntotal_frames
         character(len = :), allocatable :: file_name, fn_in, fn_out
         type(mpg_t) :: mpg
         type(subband_t), allocatable :: subb
         type(wavfile_t), allocatable :: wav
         type(mpgfile_t), allocatable :: mp1
+        allocate(wav, mp1, subb) 
+
         call get_option(mpg, file_name)
         fn_in  = trim(file_name) // '.wav'
         fn_out = trim(file_name) // '.mp1'
-        call open_wav_file(wav, fn_in ) ! allocate wav, read whole wav file
-        call open_mp1_file(mp1, fn_out) ! allocate mp1
+        call wav%open_file(fn_in ) 
+        call mp1%open_file(fn_out) 
         call pr_info(mpg)
         call pr_play_time( wav%get_play_time() )
         nchannel = wav%get_channel()
         if (nchannel == 1) mpg%mode = 3 ! monoral  
         allocate( pcm(864, nchannel), source = 0.0_kd )
-        allocate( smr(32, nchannel), iscale_factor(32, nchannel), isubband(32, 12, nchannel), ialloc_bits(32, nchannel) )
         call init_subband(subb, nchannel)
         ntotal_frames = wav%get_data_size() / (mpeg_frame_size(mpg%layer) * nchannel * 2)
         do while(iframe < ntotal_frames )
             call get_maxbits(mpg, max_bits)
             call mp1%clear_bit_buff(max_bits)
             call mp1%encode_header(mpg)
-            itot_bits = 32
             call wav%pcm1frame(pcm) 
             call subb%polyphase_filter12(pcm) 
-            call psychoacoustics(pcm, wav%get_sampling_rate(), smr)
+            smr = psychoacoustics(pcm, wav%get_sampling_rate())
             iscale_factor = isubband_normalization(subb%subband)
-            itot_bits = itot_bits + 4 * 32 * nchannel     ! 4*32*nch bits required for the scale factor bits : 
-            if (mpg%icrc == 0) itot_bits = itot_bits + 16 ! 16bits required for the crc
-            call bit_allocation(smr, max_bits, itot_bits, ialloc_bits)
-            if (mpg%icrc == 0) call mp1%encode_crc(mpg, ialloc_bits)
+            ialloc_bits = bit_allocation(mpg, smr, max_bits)
+            call mp1%encode_crc(mpg, ialloc_bits)
             isubband = iquantization(ialloc_bits, subb%subband, iscale_factor)
             call mp1%encode_body(ialloc_bits, iscale_factor, isubband)
             call mp1%write_bits_1frame(max_bits)
@@ -49,11 +46,11 @@
             if (mod(iframe, 200) == 0) call update_status(iframe, ntotal_frames) 
         end do
         write(*, *) 'total frames', iframe, '/', ntotal_frames
-        deallocate(wav, mp1)
+        deallocate(wav, mp1, subb) 
     contains
         subroutine pr_info(mpg)
             type (mpg_t), intent(in) :: mpg
-            write(*, *) 'uzura1 (mpeg-1 audio/layer-I encoder) ver.0.4.2 '
+            write(*, *) 'uzura1 (mpeg-1 audio/layer-I encoder) ver.0.4.3 '
             write(*, *) 'psychoacoustic model ', mpeg_psy_names(mpg%ipsychoacoustic), &
                         ' bit rate (kbps)', mpeg_bit_rates(mpg%ibit_rate, mpg%layer)
             if (mpg%icrc == 0) write(*, *) 'crc16 error protection enabled'
@@ -65,7 +62,7 @@
             ihour =          itot_sec / 3600
             imin  =      mod(itot_sec, 3600) / 60
             isec  = mod( mod(itot_sec, 3600) , 60 )
-            write(*, '(a, i3, a, i2, a, i2)') ' playtime ', ihour, ':', imin, ':', isec
+            write(*, '(a, i3, a, i2, a, i2/)') ' playtime ', ihour, ':', imin, ':', isec
         end subroutine pr_play_time
         
         subroutine update_status(iframe, itot_frames)

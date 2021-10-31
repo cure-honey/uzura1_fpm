@@ -20,7 +20,7 @@ $fpm run
 ```
 ## encode fn.wav file to fn.mp1 file
 
-$fpm run -- -b 10 file_name
+$fpm run -- -b 10 fn
 
 
 # bug fix etc

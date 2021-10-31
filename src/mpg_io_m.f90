@@ -5,7 +5,7 @@
         use crc_m
         implicit none
         private 
-        public :: mpgfile_t, open_mp1_file
+        public :: mpgfile_t
         type, extends(file_t) :: mpgfile_t
             private
             integer :: iunit 
@@ -25,13 +25,6 @@
             procedure :: put_bits_c
         end type mpgfile_t    
     contains
-        subroutine open_mp1_file(this, fn)
-            type(mpgfile_t),   intent(out), allocatable :: this
-            character(len = *), intent(in) :: fn
-            allocate(this)
-            call this%open_file(fn)        
-        end subroutine open_mp1_file
-  
         subroutine open_mpg(this, fn)
             class(mpgfile_t),   intent(in out) :: this
             character(len = *), intent(in) :: fn
@@ -100,6 +93,7 @@
             type (mpg_t)    , intent(in    ) :: mpg
             integer         , intent(in    ) :: ialloc_bits(:, :)
             integer :: iband, ichannel, icrc
+            if (mpg%icrc /= 0) return 
             icrc = int(Z'0000FFFF') ! initialize crc 
             call crc16(4, mpg%ibit_rate     , icrc)
             call crc16(2, mpg%isample_rate  , icrc)

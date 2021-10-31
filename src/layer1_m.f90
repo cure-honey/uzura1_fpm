@@ -1,5 +1,6 @@
     module layer1_m
         use kind_m
+        use mpg_m
         implicit none
         private
         public :: isubband_normalization, bit_allocation, iquantization
@@ -23,11 +24,9 @@
             real(kd), intent(in) :: subband(0:, 0:, 0:)
             integer :: iscale_factor(0:31, 0:size(subband, 3))
             integer :: ichannel, iband
-            do ichannel = 0, size(subband, 3)
-                do iband = 0, 31
-                    iscale_factor(iband, ichannel) = iscale_fac_sub(subband(iband, :, ichannel)) 
-                end do
-            end do
+            forall(iband = 0:31, ichannel = 0:size(subband, 3))  
+                iscale_factor(iband, ichannel) = iscale_fac_sub(subband(iband, :, ichannel)) 
+            end forall
         contains
             pure integer function iscale_fac_sub(x) result(ires)
                 real(kd), intent(in) :: x(0:)
@@ -37,13 +36,16 @@
             end function iscale_fac_sub
         end function isubband_normalization
 
-        subroutine bit_allocation(smr, max_bits, itot_bits, ialloc_bits)
+        function bit_allocation(mpg, smr, max_bits) result(ialloc_bits)
+            type(mpg_t), intent(in) :: mpg
             real(kd), intent(in) :: smr(:, :)
             integer , intent(in) :: max_bits
-            integer , intent(   out) :: ialloc_bits(:, :)
-            integer , intent(in out) :: itot_bits
-            integer  :: max_pos(2), k
-            real(kd) :: rmnr(32, size(smr, 2))
+            integer :: ialloc_bits(32, size(smr, 2))
+            integer  :: max_pos(2), itot_bits, k
+            real(kd) :: rmnr(32, size(smr, 2)) ! size(smr, 2) = no. of channel
+            
+            itot_bits = 32 + 4 * 32 * size(smr, 2) ! 32bits for header + 4*32*nch bits required for the scale factor bits : 
+            if (mpg%icrc == 0) itot_bits = itot_bits + 16 ! 16bits required for the crc
             ialloc_bits = 0
             rmnr = smr - snr(0)
             do 
@@ -71,7 +73,7 @@
                 ialloc_bits( max_pos(1), max_pos(2) ) = k + 1
                 rmnr       ( max_pos(1), max_pos(2) ) = smr( max_pos(1), max_pos(2) ) - snr(k + 1)
             end do
-        end subroutine bit_allocation
+        end function bit_allocation
 
         pure function iquantization(ialloc_bits, subband, iscale_factor) result(isubband)
             integer , intent(in) :: ialloc_bits(0:, 0:), iscale_factor(0:, 0:)

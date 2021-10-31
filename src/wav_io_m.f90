@@ -3,7 +3,7 @@
         use file_io_m
         implicit none
         private
-        public :: wavfile_t, open_wav_file
+        public :: wavfile_t
         type :: fmt_t
             sequence
             character(4):: chunk_id
@@ -48,13 +48,6 @@
             procedure, public :: get_play_time
         end type wavfile_t
     contains
-        subroutine open_wav_file(this, fn)
-            type(wavfile_t), intent(out), allocatable :: this 
-            character(len = *), intent(in) :: fn
-            allocate(this)
-            call this%open_file(fn)
-        end subroutine open_wav_file
- 
         subroutine open_wav(this, fn)
             class(wavfile_t), intent(in out) :: this
             character(len = *), intent(in) :: fn

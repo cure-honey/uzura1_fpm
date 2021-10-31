@@ -1,5 +1,6 @@
     module psycho_m
         use kind_m
+        use fft_m
         implicit none
         private
         public :: psychoacoustics
@@ -9,15 +10,14 @@
         real(kd), save :: scale
         real(kd), parameter :: alpha = 0.27_kd ! non-linear factor
     contains
-        subroutine psychoacoustics(pcm, isample_rate, smr)
-            use fft_m
+        function psychoacoustics(pcm, isample_rate) result(smr) ! impure
             real (kd), intent(in ) :: pcm(:, :) 
             integer       , intent(in ) :: isample_rate
-            real (kd), intent(out) :: smr(:, :)
+            real (kd) :: smr(32, size(pcm, 2))
             complex(kd) :: cfft(512)
             integer :: ichannel, i0, i1
             logical, save :: qfirst = .true.
-            if (qfirst) then
+            if (qfirst) then 
                 qfirst = .false.
                 call init_absolute_threshold(isample_rate)
             end if
@@ -27,7 +27,7 @@
                 call fft_window(pcm(i0:i1, ichannel), cfft)
                 call calc_smr(cfft, smr(:, ichannel))
             end do
-        end subroutine
+        end function psychoacoustics
  
         subroutine init_absolute_threshold(isample_rate)
             integer, intent(in) :: isample_rate
@@ -78,17 +78,18 @@
         subroutine calc_smr(cfft, smr)
             complex(kd), intent(in) :: cfft(0:)
             real   (kd), intent(out) :: smr(:)
-            real   (kd) :: snr(32), rmnr(32)
+            real   (kd) :: snr(32), amnr(32)
             real   (kd) :: xa(0:256), ya(0:256), za(0:256)
             integer :: iband, i, m, i0, i1
             xa = 2 * decibel( abs(cfft(0:256)) )
             ya = 0.0_kd
-            forall(i = 1:256, m = 1:256) &  ! i maskee, m masker 
-               ya(i) = ya(i) + 10.0_kd**( ((sp(i, m) + xa(m) - ath_fft(m)) * alpha - cbwl_fft(m)) / 10.0_kd ) ! non-linear sum
+            do i = 1, 256
+                do m = 1, 256 ! i maskee, m masker 
+                    ya(i) = ya(i) + 10.0_kd**( ((sp(i, m) + xa(m) - ath_fft(m)) * alpha - cbwl_fft(m)) / 10.0_kd ) ! non-linear sum
+                end do
+            end do
             ya = max(decibel(ya * scale) / alpha - 11.5_kd, ath_fft - 90.3_kd) ! 11.5 mask factor, 90.3dB = 2^15  ATH shift empirical 
-
-            ya = max(decibel(ya * scale) / alpha - 11.5_kd, ath_fft - 90.3_kd) ! 11.5 mask factor, 90.3dB = 2^15  ATH shift empirical 
-        ! effective spl
+            ! effective spl
             do i = 1, 256
                 m = nint( crbw_fft(i) / scale )
                 i0 = max(i  - m / 2,   1)       !f0 - bw(f0) / 2 
@@ -105,8 +106,8 @@
                 i1 = m + nint( crbw_fft(m) / 2 / scale ) ! fh + bw(fh) / 2 
                 i1 = min(i1, 256)
                 snr(iband)  = maxval( za(i0:i1) )
-                rmnr(iband) = minval( ya(i0:i1) ) 
+                amnr(iband) = minval( ya(i0:i1) ) 
             end do
-            smr = snr - rmnr 
+            smr = snr - amnr 
         end subroutine calc_smr
     end module psycho_m
