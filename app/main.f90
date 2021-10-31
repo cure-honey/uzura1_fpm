@@ -30,20 +30,22 @@
         call init_subband(subb, nchannel)
         ntotal_frames = wav%get_data_size() / (mpeg_frame_size(mpg%layer) * nchannel * 2)
         do while(iframe < ntotal_frames )
-            call get_maxbits(mpg, max_bits)
-            call mp1%clear_bit_buff(max_bits)
-            call mp1%encode_header(mpg)
             call wav%pcm1frame(pcm) 
             call subb%polyphase_filter12(pcm) 
             smr = psychoacoustics(pcm, wav%get_sampling_rate())
+
+            call get_maxbits(mpg, max_bits)
             iscale_factor = isubband_normalization(subb%subband)
             ialloc_bits = bit_allocation(mpg, smr, max_bits)
-            call mp1%encode_crc(mpg, ialloc_bits)
             isubband = iquantization(ialloc_bits, subb%subband, iscale_factor)
+
+            call mp1%clear_bit_buff(max_bits)
+            call mp1%encode_header(mpg)
+            call mp1%encode_crc(mpg, ialloc_bits)
             call mp1%encode_body(ialloc_bits, iscale_factor, isubband)
             call mp1%write_bits_1frame(max_bits)
+            if (mod(iframe, 500) == 0) call update_status(iframe, ntotal_frames) 
             iframe = iframe + 1
-            if (mod(iframe, 200) == 0) call update_status(iframe, ntotal_frames) 
         end do
         write(*, *) 'total frames', iframe, '/', ntotal_frames
         deallocate(wav, mp1, subb) 

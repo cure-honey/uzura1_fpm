@@ -4,15 +4,15 @@
         implicit none
         private
         public :: psychoacoustics
-        real(kd), save :: freq_fft(0:256), pseud_bark(0:256), ath_fft(0:256)
-        real(kd), save :: crbw_fft(0:256), cbwl_fft(0:256)
+        real(kd), save :: freq_fft(256), pseud_bark(256), ath_fft(256)
+        real(kd), save :: crbw_fft(256), cbwl_fft(256)
         real(kd), save :: sp(256, 256) ! spreading function for masking
         real(kd), save :: scale
         real(kd), parameter :: alpha = 0.27_kd ! non-linear factor
     contains
         function psychoacoustics(pcm, isample_rate) result(smr) ! impure
-            real (kd), intent(in ) :: pcm(:, :) 
-            integer       , intent(in ) :: isample_rate
+            real (kd), intent(in) :: pcm(:, :) 
+            integer  , intent(in) :: isample_rate
             real (kd) :: smr(32, size(pcm, 2))
             complex(kd) :: cfft(512)
             integer :: ichannel, i0, i1
@@ -33,9 +33,9 @@
             integer, intent(in) :: isample_rate
             real (kd) :: freq, tmp
             integer :: i, m
-            do i = 0, size(freq_fft) - 1
+            do i = 1, size(freq_fft)
                 freq = real(isample_rate, kind = kd) / 2.0_kd / 1000.0_kd &
-                     * real(i, kind = kd) / real(size(freq_fft), kind = kd)
+                     * real(i - 1, kind = kd) / real(size(freq_fft), kind = kd)
                 ath_fft(i) = 3.64_kd * freq**(-0.8_kd)  & ! 
                            - 6.5_kd * exp(-0.6_kd * (freq - 3.3_kd)**2) + 0.001_kd * freq**4.0_kd   
                 freq = freq * 1000.0_kd ! khz -> hz
@@ -76,12 +76,14 @@
         end function decibel
       
         subroutine calc_smr(cfft, smr)
-            complex(kd), intent(in) :: cfft(0:)
+            complex(kd), intent(in) :: cfft(:)
             real   (kd), intent(out) :: smr(:)
             real   (kd) :: snr(32), amnr(32)
-            real   (kd) :: xa(0:256), ya(0:256), za(0:256)
+            real   (kd) :: xa(256), ya(256), za(256)
             integer :: iband, i, m, i0, i1
-            xa = 2 * decibel( abs(cfft(0:256)) )
+            xa = 2 * decibel( abs(cfft(:256)) )
+            xa(1) = 0.0_kd ! dc cut
+            ! convolution of spreading function
             ya = 0.0_kd
             do i = 1, 256
                 do m = 1, 256 ! i maskee, m masker 
